@@ -21,9 +21,14 @@ app = dash.Dash(__name__, server=server, url_base_pasthname = '/Housing Market P
 
 ##########Read in data and rename columns/variables so that they are interpretable to users###########
 
-df = pd.read_csv('housingdata.csv') #data to be plotted
-coefs = pd.read_csv('coefs.csv') #the coefficients for the predictors
-pred_error = round(coefs.Error, 0) #prediction error (RMSE)
+df = pd.read_csv('apphousingdata.csv') #data to be plotted
+x_train = pd.read_csv('trainingdata.csv')
+y_train = pd.read_csv('trainingdata_y.csv')
+lm = linear_model.LinearRegression(normalize = False)
+model = lm.fit(x_train, y_train)
+train_pred = model.predict(x_train)
+pred_error =  np.sqrt(mean_squared_error(y_train, train_pred))
+pred_error = round(pred_error, 0)
 
 #list of columns that need renamed
 colstorename = ['ADDRESS', 'SQFT', 'BTH_STYLE', 'KITCH_STYLE',
@@ -49,11 +54,12 @@ df.rename(columns = {'ADDRESS':'Address',
                      'KITCH_STYLES':'Kitchen Style',
                      'PROPERTY_TYPE':'Property Type',
                      'YRS_SINCE_REMOD':'Years since last remodel',
+                     'AGE_OF_HOME':'Age of Home',
                      'HOA_FEES':'HOA Fees'}, inplace = True)
 
 #columns that will be shown to people when they hover over data points
 colstoshow = ['Address', 'SQFT', 'Bathroom Style', 'Kitchen Style',
-              'Property Type', 'Years since last remodel', 'HOA Fees']
+              'Property Type', 'Age of Home', 'Years since last remodel', 'HOA Fees']
 
 #gathering names of neighborhoods and alphabetically sorting them
 Neighborhoods = df.NEIGHBORHOOD.dropna().unique()
@@ -100,7 +106,7 @@ app.layout = html.Div([
             options=[{'label':i, 'value': i} for i in ['use the prediction engine', 'compare my home to other homes']],
             value = 'use the prediction engine'
             ),
-        html.Br(),
+        html.Br(), 
 
 ###Mode 1: user imputs info about a home and it predicts how long it will take to sell
         
@@ -113,32 +119,7 @@ app.layout = html.Div([
                     options=[{'label': i, 'value': i} for i in Neighborhoods],
                     value='Allston'
                     )],
-                     style={'width': '25%'}),
-            html.Br(),
-            #Numeric textbox for List price
-            html.Div([
-                html.P('List Price'),
-                dcc.Input(id='List_Price', type = 'number', inputMode='numeric', value = 750000)],
-                     style={'width': '25%'}),
-            html.Br(),
-            #Numeric textbox for HOA Fees
-            html.Div([
-                html.P('HOA Fees'),
-                dcc.Input(id='HOA_FEES', type = 'number', inputMode='numeric', value = 0)],
-                     style={'width': '25%'}),
-            html.Br(),
-            #Numeric textbox for Years Since Last Remodel
-            html.Div([
-                html.P('Years Since Last Remodel'),
-                dcc.Input(id='YRS_SNC_REMOD', type = 'number', inputMode='numeric', value = 0)],
-                     style={'width': '25%'}),
-            html.Br(),
-            #Numeric textbox for Age of Home
-            html.Div([
-                html.P('Age of Home in Years'),
-                dcc.Input(id='HOME_AGE', type = 'number', inputMode='numeric', value = 0)],
-                     style={'width': '25%'}),
-            html.Br(),
+                     style={'width': '24%', 'display':'inline-block'}),
             #Dropdown to pick property type
             html.Div([
                 html.P('Property Type'),
@@ -147,7 +128,32 @@ app.layout = html.Div([
                     options=[{'label': i, 'value': i} for i in PropType],
                     value='Condo/Co-op'
                     )],
-                     style={'width': '25%'}),
+                     style={'width': '24%', 'display':'inline-block'}),
+            html.Br(),
+            html.Br(),
+            #Numeric textbox for List price
+            html.Div([
+                html.P('List Price'),
+                dcc.Input(id='List_Price', type = 'number', inputMode='numeric', value = 750000)],
+                     style={'width': '24%', 'display':'inline-block'}),
+            #Numeric textbox for HOA Fees
+            html.Div([
+                html.P('HOA Fees'),
+                dcc.Input(id='HOA_FEES', type = 'number', inputMode='numeric', value = 0)],
+                     style={'width': '24%', 'display':'inline-block'}),
+            html.Br(),
+            html.Br(),
+            #Numeric textbox for Years Since Last Remodel
+            html.Div([
+                html.P('Years Since Last Remodel'),
+                dcc.Input(id='YRS_SNC_REMOD', type = 'number', inputMode='numeric', value = 0)],
+                     style={'width': '24%', 'display':'inline-block'}),
+            #Numeric textbox for Age of Home
+            html.Div([
+                html.P('Age of Home in Years'),
+                dcc.Input(id='HOME_AGE', type = 'number', inputMode='numeric', value = 0)],
+                     style={'width': '24%', 'display':'inline-block'}),
+            html.Br(),
             html.Br(),
             #Dropdown to pick bathroom style
             html.Div([
@@ -157,8 +163,7 @@ app.layout = html.Div([
                     options=[{'label': i, 'value': i} for i in BathStyles],
                     value='No Remodeling'
                     )],
-                     style={'width': '25%'}),
-            html.Br(),
+                     style={'width': '24%', 'display':'inline-block'}),
             #Dropdown to pick kitchen style
             html.Div([
                 html.P('Kitchen Style'),
@@ -167,14 +172,14 @@ app.layout = html.Div([
                     options=[{'label': i, 'value': i} for i in KitchStyles],
                     value='No Remodeling'
                     )],
-                     style={'width': '25%'}),
+                     style={'width': '24%', 'display':'inline-block'}),
             html.Br(),
             #submit button all input values are only used when clicked
             html.Div([
                 html.Button(id='submit-button', n_clicks=0, children='Submit'),
                 html.Br(),
                 html.Br(),
-                html.Div(id='output1', style = {'fontSize':18, 'width': '49%'}, children = '')])
+                html.Div(id='output1', style = {'fontSize':18, 'width': '48%'}, children = '')])
             ]), 
 
 ###Mode 2: User inputs features of a homes and shows homes fitting that criteria and how long it took to sell based on list price
@@ -188,17 +193,15 @@ app.layout = html.Div([
                     options=[{'label': i, 'value': i} for i in Neighborhoods],
                     value='Allston'
                     )],
-                     style={'width': '25%'}),
-            html.Br(),
+                     style={'width': '16%', 'display':'inline-block'}),
             #dropdown to select number of beds
             html.Div([
-                html.P('Number of Beds'),
+                html.P('Number of Bedrooms'),
                 dcc.Dropdown(
                 id='Number_Beds',
                 options=[{'label': i, 'value': i} for i in Beds],
                 value=1)],
-                     style={'width': '25%'}),
-            html.Br(),
+                     style={'width': '16%', 'display':'inline-block'}),
             #dropwdown to select number of bathrooms
             html.Div([
                 html.P('Number of Bathrooms'),
@@ -206,7 +209,8 @@ app.layout = html.Div([
                     id='Number_Baths',
                     options=[{'label': i, 'value': i} for i in Baths],
                 value=1)],
-                     style={'width': '25%'}),
+                     style={'width': '16%', 'display':'inline-block'}),
+            html.Br(),
             html.Br(),
             #Range slider to select a SQFT in a range. Kept at a minimum range of 500 to help make sure data are available to be plotted
             html.Div([
@@ -223,10 +227,11 @@ app.layout = html.Div([
                     id='housegraph', hoverData={'points': [{'customdata': '15 N Beacon St #1003'}]}
                     ),
                 #table that updates based on hovering over points
+                html.Br(),
                 html.Div(id='table-holder')],
                 style={'width':'49%'})
                 ])
-            ])           
+            ])
         ])
     ])
 
@@ -282,7 +287,7 @@ def update_output1(n_clicks, Neighborhood, ListPrice, HOAS, YRS_REMOD, AGE_HOME,
         PropMultiFam = 0
     elif PropType == 'Multi-Family (2-4) Unit':
         PropCondo = 0
-        PropMultiFam = 0
+        PropMultiFam = 1
     else:
         PropCondo = 0
         PropMultiFam = 0
@@ -316,14 +321,23 @@ def update_output1(n_clicks, Neighborhood, ListPrice, HOAS, YRS_REMOD, AGE_HOME,
     #create trend_value
     trend_val = 47.377732 - 0.0941*(trendmonth)
 
+    #create dataframe for prediction
+    #start with a dictionary of the values/column names
+    pred_data = {'DIFF_FROM_NEIGH_AVE_LIST_PRICE':AvePricediff, 'HOA_FEES':HOAS,
+                 'YRS_SINCE_REMOD':YRS_REMOD, 'AGE_OF_HOME':AGE_HOME,
+                 'PROPERTY_TYPE_Condo/Co-op':PropCondo,
+                 'PROPERTY_TYPE_Multi-Family (2-4 Unite)':PropMultiFam,
+                 'BTH_STYLE_M':Bath_Style_M, 'KITCH_STYLE_M':Kitch_Style_M,
+                 'trend':trend_val}
+    #convert to pandas dataframe
+    df_pred = pd.DataFrame(pred_data, index = [0])
+
     #create blank prediction
     prediction = ''
 
-    #use values to create prediction using the coefficients and the user inputs
-    prediction = int((coefs.DIFF_FROM_NEIGH_AVE_LIST_PRICE*AvePricediff + coefs.HOA_FEES*HOAS+ coefs.YRS_SINCE_REMOD*YRS_REMOD+
-                   coefs.AGE_OF_HOME*AGE_HOME+ coefs['PROPERTY_TYPE_Condo/Co-op']*PropCondo + coefs['PROPERTY_TYPE_Multi-Family (2-4 Unit)']*PropMultiFam +
-                   coefs.BTH_STYLE_M*Bath_Style_M+ coefs.KITCH_STYLE_M*Kitch_Style_M+ coefs.trend*trend_val+ coefs.Intercept))
-
+    #use values to create prediction inputs
+    prediction = model.predict(df_pred)    
+    
     #provide an interval for the predictions
     lowpred = int(prediction - pred_error)
     highpred = int(prediction + pred_error)
@@ -334,7 +348,7 @@ def update_output1(n_clicks, Neighborhood, ListPrice, HOAS, YRS_REMOD, AGE_HOME,
     if (highpred < 0):
         highpred = 0
 
-    return 'If that home is listed now, it would be under agreement/pending sale between {:d} and {:d} days. (Note: Predictions may not change upon submit because some home features cause minor changes in predictions)'.format(lowpred, highpred)
+    return 'If that home is listed now, it would be under agreement/pending sale between {:d} and {:d} days.'.format(lowpred, highpred)
 
 
 
