@@ -14,6 +14,7 @@ from sklearn import linear_model
 from sklearn import preprocessing
 from sklearn.metrics import mean_squared_error
 import datetime
+import base64
 
 server = flask.Flask(__name__)
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -88,6 +89,10 @@ KitchStyles.sort()
 #change title so that tab doesn't say "Dash" but the name of the app
 app.title = 'Going Going Sold!'
 
+#add image so it can be displayed
+image_filename = 'house_img.jpg'
+encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+
 
 ################################App Layout##############################################
 
@@ -95,6 +100,10 @@ app.layout = html.Div([
     dcc.Markdown('''
 ###### Going...Going...Sold! 
     '''),
+    html.Br(),
+    html.Div([
+        html.Img(src='data:imagejpg;base64,{}'.format(encoded_image.decode()),
+        style={'width':'49%'})]),
     html.Br(),
 
 
